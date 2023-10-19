@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CaixaBank assistant</title>
+    <style>
+        :root {
+            --primary-color: #009dd6;
+            --secondary-color: #232f3e;
+            --background-color: #f8f9fa;
+            --bot-color: #28a745;
+            --user-color: #007bff;
+            --fade-duration: 0.5s;
+            --button-color: #007bff;
+            --button-color-dark: #0a84ff;
+            --button-bg-color: #e1f5fe;
+            --button-bg-color-dark: #001935;
+            --chat-bg-color: #ffffff;
+            --message-box-color: #2b2b2b;
+            --input-bg-color: #f8f9fa;
+            --user-message-color: #000000;
+            --bot-message-color: #000000;
+            --marked-message-color: #000000;
+            --unmarked-message-color: #000000;
+        }
+        #chat-container {
+        background-color: var(--chat-bg-color);
+        white-space: pre-wrap; /* Agregar esta línea para mantener los saltos de línea */
+    }
+
+        body,
+        h1,
+        p {
+            margin: 0;
+            padding: 0;
+            font-family: "arial";
+            background-color: var(--background-color);
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px 0;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        #chat-container,
+        #feedback-stats {
+            border: none;
+            background-color: #2b2b2b;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px 0 hsla(0, 0%, 0%, 0.07);
+        }
+
+        body {
+            display: grid;
+            grid-template-columns: 15% 85%;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #sidebar {
+            background-color: #c7c8c9;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        #main-content {
+            overflow: auto;
+            padding: 20px;
+        }
+
+        #chat-container {
+            width: 80%;
+            height: 400px;
+            margin: 0 auto;
+            overflow-y: auto;
+        }
+
+        #input-container {
+            margin: 20px auto;
+            width: 80%;
+            display: flex;
+            align-items: center;
+        }
+
+        #question-input,
+        #send-button,
+        #clear-all-button {
+            font-size: 16px;
+            border-radius: 5px;
+            padding: 10px 20px;
+            border: none;
+            transition: all 0.3s ease-out;
+        }
+
+        #question-input {
+            flex-grow: 1;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+        }
+
+        #question-input::placeholder {
+            color: var(--secondary-color);
+        }
+
+        #send-button {
+            background-color: var(--primary-color);
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #send-button:hover,
+        #clear-all-button:hover {
+            opacity: 0.7;
+        }
+
+        #clear-all-button {
+            background-color: #dc3545;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        p,
+        #chat-container p {
+            margin: 5px 0;
+        }
+
+        .fade-in {
+            opacity: 0;
+        }
+
+        p b {
+        font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-in forwards;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+
+        /* Modo oscuro */
+        .dark-mode {
+            --primary-color: #82b1ff;
+            --secondary-color: #e0e0e0;
+            --background-color: #121212;
+            --bot-color: #4caf50;
+            --user-color: #2196f3;
+            --button-color: #f5a623;
+            --button-color-dark: #ffffff;
+            --button-bg-color: #1d1f27;
+            --button-bg-color-dark: #0a84ff;
+            --chat-bg-color: #2b2b2b;
+            --message-box-color: #2b2b2b;
+            --input-bg-color: #2b2b2b;
+            --input-text-color: #e0e0e0;
+            --user-message-color: #ffffff;
+            --bot-message-color: #ffffff;
+            --marked-message-color: #000000;
+            --unmarked-message-color: #ffffff;
+        }
+
+        /* Estilos para los botones de modo claro y oscuro */
+        .theme-button {
+            border: none;
+            background-color: var(--button-bg-color);
+            cursor: pointer;
+            color: var(--button-color);
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .theme-button:hover {
+            background-color: var(--button-bg-color-dark);
+            color: var(--button-color-dark);
+        }
+
+        /* Estilos para el chat y los mensajes */
+        #chat-container {
+            background-color: var(--chat-bg-color);
+        }
+
+        .message-box {
+            background-color: var(--message-box-color);
+            border: none;
+        }
+
+        /* Estilos para el input del usuario */
+        #input-container {
+            background-color: var(--input-bg-color);
+        }
+
+        #question-input {
+            background-color: var(--input-bg-color);
+            color: var(--input-text-color);
+        }
+
+        .user {
+            color: var(--user-message-color);
+        }
+
+        .bot {
+            color: var(--bot-message-color);
+        }
+
+        /* Estilos para los botones de marcar y desmarcar */
+        .mark-button,
+        .unmark-button {
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+            visibility: hidden;
+            transition: color 0.3s ease;
+        }
+
+        /* Estilos para el menú horizontal */
+        ul.horizontal-menu {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #f6f6f6;
+        }
+
+        ul.horizontal-menu li {
+            margin-right: 20px;
+        }
+
+        ul.horizontal-menu li:last-child {
+            margin-right: 0;
+        }
+
+        ul.horizontal-menu li a {
+            text-decoration: none;
+            color: #232f3e;
+            font-weight: bold;
+        }
+
+        /* Estilos adicionales para los enlaces activos */
+        ul.horizontal-menu li a:hover,
+        ul.horizontal-menu li a:focus,
+        ul.horizontal-menu li a:active {
+            color: #fff;
+        }
+
+        .mark-button {
+            color: #28a745;
+        }
+
+        .unmark-button {
+            color: #dc3545;
+        }
+
+        .mark-button:hover,
+        .unmark-button:hover {
+            color: #218838;
+        }
+
+        .message:hover .mark-button {
+            visibility: visible;
+        }
+
+        .message.marked .unmark-button {
+            visibility: visible;
+        }
+
+        .message:hover.marked .mark-button {
+            visibility: hidden;
+        }
+
+        .message.marked {
+            background-color: #ffd700;
+        }
+
+        .message.marked span {
+            color: var(--marked-message-color);
+        }
+
+        .message:not(.marked) span {
+            color: var(--unmarked-message-color);
+        }
+
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            let chats = [],
+                currentChatIndex = 0,
+                likes = 0,
+                dislikes = 0;
+
+            const chatContainer = $("#chat-container");
+            const questionInput = $("#question-input");
+
+            $("#send-button, #question-input")
+                .click(sendMessage)
+                .keypress(function (event) {
+                    if (event.which === 13 && !event.shiftKey) {
+                        event.preventDefault();
+                        sendMessage();
+                    }
+                });
+
+            function sendMessage() {
+                const question = questionInput.val();
+                if (question !== "") {
+                    if (!chats[currentChatIndex]) {
+                        chats[currentChatIndex] = [];
+                    }
+                    chats[currentChatIndex].push({ type: "user", message: question });
+                    appendMessage("Usuario: ", question, "user");
+                    questionInput.val("");
+                    $.post("/chat", { question: question }, function (data) {
+                        chats[currentChatIndex].push({
+                            type: "bot",
+                            message: data.response,
+                        });
+                        appendMessage("Asistente: ", data.response, "bot");
+                    });
+                    updateChatList();
+                }
+            }
+
+            function appendMessage(prefix, text, type) {
+                const animatedText = animateText(`${prefix} ${text}`, type);
+                const messageElement = `<p class="${type}">${animatedText}</p>`;
+                chatContainer
+                    .append(messageElement)
+                    .scrollTop(chatContainer[0].scrollHeight);
+            }
+
+            function animateText(text, type) {
+                return type === "bot"
+                    ? text
+                        .split("")
+                        .map(
+                            (char, index) =>
+                                `<span class="fade-in ${type} slide-in" style="animation-delay: ${index * 0.01
+                                }s">${char}</span>`
+                        )
+                        .join("")
+                    : `<span class="fade-in ${type}">${text}</span>`;
+            }
+
+            $("#clear-all-button").click(function () {
+                chats = [];
+                currentChatIndex = 0;
+                chatContainer.empty();
+                showInitialMessage();
+                updateChatList();
+            });
+
+            function updateChatList() {
+                var chatList = $("#chat-list").empty();
+                for (var i = 0; i < chats.length; i++) {
+                    chatList.append(
+                        '<button class="chat-button" data-index="' +
+                        i +
+                        '">Chat ' +
+                        (i + 1) +
+                        "</button>"
+                    );
+                }
+            }
+
+            $("#chat-container").on(
+                "click",
+                ".like-button, .dislike-button",
+                function () {
+                    var isLike = $(this).hasClass("like-button");
+                    if (isLike) likes++;
+                    else dislikes++;
+                    var totalFeedbacks = likes + dislikes;
+                    var likePercentage =
+                        totalFeedbacks === 0 ? 0 : (likes / totalFeedbacks) * 100;
+                    updateFeedbackStats(likePercentage);
+                    $(this)
+                        .addClass("active")
+                        .siblings(isLike ? ".dislike-button" : ".like-button")
+                        .removeClass("active")
+                        .hide();
+                }
+            );
+
+            $("#chat-container").on("animationend", ".message", function () {
+                if ($(this).hasClass("slide-out")) {
+                    $(this).remove();
+                }
+            });
+
+            function updateFeedbackStats(likePercentage) {
+                $("#feedback-stats").text(
+                    "Likes: " + likePercentage.toFixed(2) + "%"
+                );
+            }
+
+            function showInitialMessage() {
+                var initialMessage =
+                    "¡Hola! 😄, soy tu asistente para la generación de datos para tus proyectos de IA. ¿Cómo puedo ayudarte?"
+                chats[currentChatIndex] = [{ type: "bot", message: initialMessage }];
+                var botResponse =
+                    '<p class="bot slide-in">' +
+                    animateText("Asistente: " + initialMessage, "bot") +
+                    "</p>";
+                $("#chat-container")
+                    .append(botResponse)
+                    .scrollTop($("#chat-container")[0].scrollHeight);
+                updateChatList();
+            }
+
+            /* Cambia al modo oscuro */
+            $("#dark-mode-button").click(function () {
+                $("body").addClass("dark-mode");
+            });
+
+            /* Cambia al modo claro */
+            $("#light-mode-button").click(function () {
+                $("body").removeClass("dark-mode");
+            });
+
+            function appendMessage(prefix, text, type) {
+                const animatedText = animateText(`${prefix} ${text}`, type);
+                const messageElement = `<p class="message ${type}"><span>${animatedText}</span><button class="mark-button" title="Mark this message"><i class="fas fa-bookmark"></i></button><button class="unmark-button" title="Unmark this message"><i class="fas fa-bookmark"></i></button></p>`;
+                chatContainer
+                    .append(messageElement)
+                    .scrollTop(chatContainer[0].scrollHeight);
+            }
+
+            $("#chat-container").on("click", ".mark-button", function () {
+                $(this).parent().addClass("marked");
+            });
+
+            $("#chat-container").on("click", ".unmark-button", function () {
+                $(this).parent().removeClass("marked");
+            });
+
+            showInitialMessage();
+            updateChatList();
+        });
+    </script>
+</head>
+
+<body style="display: flex; justify-content: center; align-items: center; margin: 0;">
+    <div style="width: 80%;">
+        <div id="main-content">
+            <h1 style="text-align: center;">
+                Habla con tu generador de datos CaixaBank
+            </h1>
+            <ul class="horizontal-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="http://127.0.0.1:8080/user/login/">Anotación</a></li>
+                <li><a href="http://127.0.0.1:8080/user/login/">Visualización</a></li>
+                <!-- <li><a href="pagina4.html">Página 4</a></li>
+                <li><a href="pagina5.html">Página 5</a></li> -->
+            </ul>
+            <div id="chat-container" style="width: 80%; height: 400px;">
+                {% for message in chat_history %}
+                <p class="message {{ message.type }}">
+                    {{ message.prefix }} <span class="message-text">{{ message.text|safe }}</span>
+                    <button class="mark-button" title="Mark this message"><i class="fas fa-bookmark"></i></button>
+                    <button class="unmark-button" title="Unmark this message"><i class="far fa-bookmark"></i></button>
+                </p>
+                {% endfor %}
+            </div>
+            <div id="input-container"
+                style="margin: 20px auto; width: 75%; display: flex; align-items: center; justify-content: center;">
+                <input type="text" id="question-input" placeholder="Que necesitas generar..." />
+                <button id="send-button" title="Enviarás su mensaje actual.">
+                    <i class="fas fa-paper-plane"></i> Enviar
+                </button>
+                <button id="clear-all-button" title="Borrarás todas las conversaciones actuales.">
+                    <i class="fas fa-trash-alt"></i> Borrar
+                </button>
+            </div>
+                <!-- Región de arrastrar y soltar -->
+                <div id="drag-and-drop-area" style="border: 2px dashed #009dd6; padding: 20px; text-align: center;">
+                    Arrastra y suelta archivos aquí
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const dragAndDropArea = document.getElementById('drag-and-drop-area');
+
+        dragAndDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragAndDropArea.classList.add('drag-over');
+        });
+
+        dragAndDropArea.addEventListener('dragleave', () => {
+            dragAndDropArea.classList.remove('drag-over');
+        });
+
+        dragAndDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragAndDropArea.classList.remove('drag-over');
+
+            const files = e.dataTransfer.files;
+            // Procesa los archivos que se soltaron aquí
+            // Puedes agregar tu lógica para manejar los archivos aquí
+        });
+    </script>
+
+<!-- <body style="display: flex; justify-content: center; align-items: center; margin: 0;">
+    <div style="width: 80%;">
+        <div id="main-content">
+            <h1 style="text-align: center;">
+                Chatea con tu asistente de CaixaBank
+            </h1>
+            <div id="chat-container" style="width: 80%; height: 400px;">
+                {% for message in chat_history %}
+                <p class="message {{ message.type }}">
+                    {{ message.prefix }} <span class="message-text">{{ message.text|safe }}</span>
+                    <button class="mark-button" title="Mark this message"><i class="fas fa-bookmark"></i></button>
+                    <button class="unmark-button" title="Unmark this message"><i class="far fa-bookmark"></i></button>
+                </p>
+                {% endfor %}
+            </div>        
+            <div id="input-container" style="margin: 20px auto; width: 75%; display: flex; align-items: center; justify-content: center;">
+                <input type="text" id="question-input" placeholder="Cual es su consulta..." />
+                <button id="send-button" title="Enviarás su mensaje actual.">
+                    <i class="fas fa-paper-plane"></i> Enviar
+                </button>
+                <button id="clear-all-button" title="Borrarás todas las conversaciones actuales.">
+                    <i class="fas fa-trash-alt"></i> Borrar
+                </button>
+            </div>
+        </div>
+    </div> -->
+
+    <script>
+        // Función para convertir saltos de línea a etiquetas <br>
+        function nl2br(text) {
+            return text.replace(/\n/g, '<br>');
+        }
+    
+        // Obtener todos los elementos que contienen el texto de los mensajes
+        const messageTextElements = document.querySelectorAll('.message-text');
+    
+        // Convertir saltos de línea en el texto de los mensajes
+        messageTextElements.forEach(element => {
+            element.innerHTML = nl2br(element.innerText);
+        });
+    </script>
+    
+
+</body>
+
+</html>

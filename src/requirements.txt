@@ -1,0 +1,9 @@
+Flask
+google-cloud
+Gunicorn
+numpy
+pandas
+scann
+vertexai
+json
+
